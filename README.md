@@ -8,7 +8,9 @@ In addition to =, this version makes available the following WHERE clause operat
 !=, <>, >, >=, <, <=, IN, LIKE, (, ), AND, OR, NOT, IS NULL, IS NOT NULL
 
 In addition to SELECT, the following statements are now available:
-INSERT, UPDATE, DELETE
+`INSERT`, `UPDATE`, `DELETE`.
+The following javascript-syntax commands are allowed:
+`insertOne`, `insertMany`, `updateOne`, `updateMany`, `deleteOne`, `deleteMany`, `drop`.
 
 There is now also some DatabaseMetaData and ResultSetMetaData available. 
 Please bear in mind for ResultSetMetaData that the same column in different 
@@ -30,11 +32,31 @@ This value can be set in the connection properties collection using the key defi
 in MongoConnection.NoColumnValue_Key.  If an update is requested on a column which sets
 it to this value, then the column is removed from the document.
 
-__*** If you don't want to compile the source *** just take the files__
-- /jar/MongoJDBC.jar
-- /lib/mongo-java-driver-2.9.3.jar
-- /lib/mongo-jsqlparser-0.7.0.jar
+### Building
+Using [Maven](https://maven.apache.org/) issue the command
+```
+mvn install
+```
+The generated jar files will be found in the `target` folder.
+Use the jar file called `MongoJDBC-<version>-fat.jar` unless you want to manually include all the dependency jars.
 
+### Connecting to a MongoDB database
+
+The connection string takes the format
+```
+mongodb://<user>:<password>@<server>:<port>/<database>?<options>
+```
+e.g. in the following java code
+```
+Class.forName("com.mongodb.jdbc.MongoDriver");
+String connStr = "mongodb://tennis_user:tennis_pass@192.168.99.100:27017/tennis_players?w=1&wtimeoutMS=30000";
+
+// Display this string when the "column" does not exist in a "record"
+java.util.Properties connProps.setProperty("NoColumnValue", "º"); 
+
+Connection con = DriverManager.getConnection(connStr, connProps);
+```
+e.g. the connection string
 
 
 
