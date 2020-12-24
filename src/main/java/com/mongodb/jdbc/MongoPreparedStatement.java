@@ -33,7 +33,8 @@ import com.mongodb.*;
 public class MongoPreparedStatement extends MongoStatement implements PreparedStatement {
 
     MongoPreparedStatement( MongoConnection conn , int type, int concurrency, int holdability , String sql )
-        throws MongoSQLException {
+        // throws MongoSQLException {
+        throws SQLException {
         super( conn , type , concurrency , holdability );
         _sql = sql;
 //nima  _exec = new Executor( conn._db , sql );

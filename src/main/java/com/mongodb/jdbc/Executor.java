@@ -22,12 +22,15 @@
 package com.mongodb.jdbc;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import org.bson.BSONException;
 import org.bson.BSONObject;
+import org.bson.json.JsonParseException;
+import org.bson.json.JsonReader;
 import org.bson.types.ObjectId;
 
 import net.sf.jsqlparser.expression.*;
@@ -44,7 +47,7 @@ import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.drop.*;
 
 import com.mongodb.*;
-import com.mongodb.util.JSON;
+//import com.mongodb.util.JSON;
 
 public class Executor {
 
@@ -75,13 +78,12 @@ public class Executor {
         if ( D ) System.out.println( sql );
     }
 */    
-    public Executor( MongoStatement stmt , String sql )
-	    throws MongoSQLException {
+    public Executor( MongoStatement stmt , String sql ) throws SQLException { // MongoSQLException {
     	_sqlStatement = stmt; 
     	_noColumnValue = stmt._conn._NoColumnValue;
 	    _db = stmt._conn._db;
 	    _sql = sql;
-	    _statement = parse( sql );
+	    _statement = parse( sql ); 
 
 	    if ( D ) System.out.println( sql );
 	}
@@ -273,7 +275,8 @@ public class Executor {
 	        	//       so see if we can turn it back, else just return the string
 	        	Object objJson = null;
 	        	try {
-	        		objJson = JSON.parse(((StringValue) e).getValue());
+//	        		objJson = JSON.parse(((StringValue) e).getValue());
+	        		objJson = JSONParse(((StringValue) e).getValue());
 	        	} catch (Exception ex) {
 	        	}
 	        	if (objJson instanceof BasicDBObject || objJson instanceof BasicDBList) {
@@ -539,7 +542,7 @@ public class Executor {
 
     // ----
     
-    DBCollection getCollection( Table t ){
+    DBCollection getCollection( Table t ) {
         return _db.getCollection( t.toString() );
     }
     
@@ -562,7 +565,15 @@ public class Executor {
     
     public static String serializeToJSON(Object o) {
     	String sToken = "{ \"$oid\" : ";
-    	String s = JSON.serialize(o);
+    	//String s = JSON.serialize(o);
+    	String s = "";
+    	if (o instanceof BasicDBObject) {
+    		s = ((BasicDBObject) o).toJson();
+    	} else 
+		if (o instanceof BasicDBList) {
+    		s = ((BasicDBList) o).toString();
+		}
+    	
     	int idx = -1;
     	int idxEndValue = -1;
     	while ((idx = s.indexOf(sToken, idx+1)) > -1) {
@@ -572,5 +583,30 @@ public class Executor {
     			")" + s.substring(idxEndValue+2);
     	}
     	return s;
+    }
+    
+    public static Object JSONParse(String sJson) {
+    	sJson = sJson.trim();
+    	try {
+	    	if (!sJson.startsWith("[")) {
+	    		BasicDBObject obj = BasicDBObject.parse(sJson);
+	    		return obj;
+	    	} else {
+	    		sJson = "{\"a\":" + sJson + "}";
+	    		BasicDBObject obj = BasicDBObject.parse(sJson);
+	    		BasicDBList list = (BasicDBList) obj.get("a");
+	    		return list;
+	    	}
+    	} catch (Exception e) {
+    		return null;
+    	}
+    }
+    
+    public static Object JSONParseAsArray(String sJson) {
+    	sJson = sJson.trim();
+    	if (!sJson.startsWith("[")) {
+    		sJson = "[" + sJson + "]";
+    	}
+    	return JSONParse(sJson);
     }
 }

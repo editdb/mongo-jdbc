@@ -29,18 +29,23 @@ import com.mongodb.*;
 
 public class MongoConnection implements Connection {
     
-    DB _db;
+	MongoClient _client;
+	DB _db;
+	MongoClientURI _uri;
     Properties _clientInfo;
     /** Connection user properties key to specify a value that indicates that a column is not present */
     public static final String NoColumnValue_Key = "NoColumnValue";
     String _NoColumnValue; // The string value to indicate that the column is not present
 
-    public MongoConnection( DB db ){
-        _db = db;
+    public MongoConnection( MongoClient client, DB db, MongoClientURI uri) {
+    	_client = client;
+    	_db = db;
+    	_uri = uri;
     }
 
     public SQLWarning getWarnings(){
-        throw new RuntimeException( "should do get last error" );
+        //throw new RuntimeException( "should do get last error" );
+    	return null;
     }
 
     public void clearWarnings(){
@@ -50,16 +55,15 @@ public class MongoConnection implements Connection {
     // ---- state -----
     
     public void close(){
-    	Mongo mongo = _db.getMongo();
-    	if (mongo != null) {
-    		mongo.close();
-    		mongo = null;
+    	if (_client != null) {
+    		_client.close();
+    		_client = null;
     	}
-        _db = null;
+    	_client = null;
     }
 
     public boolean isClosed(){
-        return _db == null;
+        return _client == null;
     }
 
     // --- commit ----
@@ -128,7 +132,7 @@ public class MongoConnection implements Connection {
         return null;
     }
     public void setCatalog(String catalog){
-    	_db = _db.getMongo().getDB(catalog);
+    	_db = _client.getDB(catalog);
     }
     
     public Properties getClientInfo(){
@@ -159,17 +163,17 @@ public class MongoConnection implements Connection {
     }
 
     public int getTransactionIsolation(){
-        throw new RuntimeException( "not dont yet" );
+        throw new RuntimeException( "does not do it yet" );
     }
     
     public DatabaseMetaData getMetaData(){
-    	DatabaseMetaData dmd = new MongoDatabaseMetaData(_db);
+    	DatabaseMetaData dmd = new MongoDatabaseMetaData(_db, _uri);
 			
         return dmd;
     }
 
     public boolean isValid(int timeout){
-        return _db != null;
+        return _client != null;
     }
 
     public boolean isReadOnly(){
@@ -254,12 +258,13 @@ public class MongoConnection implements Connection {
         throw new UnsupportedOperationException();
     }
 
-    public DB getDB(){
+    public DB getDatabase(){
         return _db;
     }
 
     public DBCollection getCollection( String name ){
-        return _db.getCollection( name );
+    	return _client.getDB(_db.getName()).getCollection(name);
+        //return _db.getCollection( name );
     }
 
     /** nima: disposes of the connection */

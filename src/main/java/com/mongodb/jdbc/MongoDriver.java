@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import com.mongodb.*;
+import com.mongodb.client.MongoDatabase;
 
 public class MongoDriver implements Driver {
 
@@ -55,17 +56,18 @@ public class MongoDriver implements Driver {
             MongoConnection conn = new MongoConnection( Mongo.connect( addr ) );
 */
         	//  nima: altered connection mechanism as it didn't work with user:pwd in the connection string
-        	MongoURI uri = new MongoURI("mongodb://" + url);
-        	DB db = uri.connectDB();
-        	MongoConnection conn = new MongoConnection(db);
+        	MongoClientURI uri = new MongoClientURI("mongodb://" + url);
+        	MongoClient client = new MongoClient(uri);
+        	DB db = client.getDB(uri.getDatabase());
+        	MongoConnection conn = new MongoConnection(client, db, uri);
         	conn.setClientInfo(info);
             //  nima: try an operation to check that the connection is good.
-            conn._db.getMongo().getDatabaseNames();
+            //conn._db.getMongo().getDatabaseNames();
             return conn;
-        }
-        catch ( java.net.UnknownHostException uh ){
-            throw new MongoSQLException( "bad url: (" + url + ")" + uh );
-        } catch ( Exception e ){
+        //}
+        //catch ( java.net.UnknownHostException uh ){
+        //    throw new MongoSQLException( "bad url: (" + url + ")" + uh );
+    	} catch ( Exception e ){
         	throw new MongoSQLException( "Connection problem with url: (" + url + "): " + e );
         }
     }
