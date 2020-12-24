@@ -1,4 +1,4 @@
-### Mongo JDBC Driver editdb version (May 2013)
+### Mongo JDBC Driver editdb version (December 2020)
 
 Home: http://github.com/editdb/mongo-jdbc
 
